@@ -181,12 +181,18 @@ def transform_data(df):
 def completion_response_wrapper(client, model, messages, n):
     ### wrapper for completion response, especially handling errors
     try:
-        response = client.chat.completions.create(
+        response = None
+        if("openai" in model):
+            response = client.chat.completions.create(
                 model=model, messages=messages, temperature=0.7, max_tokens=1200,
                 top_p=0.95, n=n, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("gemini" in model):
+            response = client.chat.completions.create(
+                model=model, messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=n)  
+        
     except Exception as e:
         response = e
-
     return response
 
 

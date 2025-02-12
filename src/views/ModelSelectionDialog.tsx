@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import '../scss/App.scss';
 
 import { useDispatch, useSelector } from "react-redux";
-import { 
+import {
     DataFormulatorState,
     dfActions,
 } from '../app/dfSlice'
@@ -74,10 +74,10 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
 
     const [modelDialogOpen, setModelDialogOpen] = useState<boolean>(false);
     const [showKeys, setShowKeys] = useState<boolean>(false);
-    const [tempSelectedModel, setTempSelectedMode] = useState<{model: string, endpoint: string} | undefined >(selectedModel);
+    const [tempSelectedModel, setTempSelectedMode] = useState<{ model: string, endpoint: string } | undefined>(selectedModel);
 
     let updateModelStatus = (model: string, endpoint: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string) => {
-        dispatch(dfActions.updateModelStatus({endpoint, model, status, message}));
+        dispatch(dfActions.updateModelStatus({ endpoint, model, status, message }));
     }
     let getStatus = (model: string, endpoint: string) => {
         return testedModels.find(t => t.model == model && t.endpoint == endpoint)?.status || 'unknown';
@@ -102,7 +102,7 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
                 endpoint: endpoint
             }),
         };
-        fetch(getUrls().TEST_MODEL, {...message })
+        fetch(getUrls().TEST_MODEL, { ...message })
             .then((response) => response.json())
             .then((data) => {
                 let status = data["status"] || 'error';
@@ -115,48 +115,49 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
     let newModelEntry = <TableRow
         key={`new-model-entry`}
         sx={{ '&:last-child td, &:last-child th': { border: 0 }, padding: "6px 6px" }}
-        onClick={() => {setTempSelectedMode(undefined)}}
+        onClick={() => { setTempSelectedMode(undefined) }}
     >
         <TableCell align="right">
-            <Radio checked={tempSelectedModel == undefined} name="radio-buttons" inputProps={{'aria-label': 'Select this model'}}/>
+            <Radio checked={tempSelectedModel == undefined} name="radio-buttons" inputProps={{ 'aria-label': 'Select this model' }} />
         </TableCell>
         <TableCell align="left">
-            <FormControl sx={{width: 100 }} size="small">
+            <FormControl sx={{ width: 100 }} size="small">
                 <Select
                     title='key type'
                     value={newKeyType}
-                    input={<OutlinedInput sx={{fontSize: '0.875rem'}}/>}
+                    input={<OutlinedInput sx={{ fontSize: '0.875rem' }} />}
                     onChange={(event: SelectChangeEvent) => {
                         setNewKeyType(event.target.value);
                     }}
                 >
-                    <MenuItem sx={{fontSize: '0.875rem' }} value="openai">openai</MenuItem>
-                    <MenuItem sx={{fontSize: '0.875rem' }} value="azureopenai">azure openai</MenuItem>
+                    <MenuItem sx={{ fontSize: '0.875rem' }} value="openai">openai</MenuItem>
+                    <MenuItem sx={{ fontSize: '0.875rem' }} value="azureopenai">azure openai</MenuItem>
+                    <MenuItem sx={{ fontSize: '0.875rem' }} value="gemini">gemini</MenuItem>
                 </Select>
             </FormControl>
         </TableCell>
         <TableCell component="th" scope="row">
-            {newKeyType == "openai" ? <Typography sx={{color: "text.secondary"}} fontSize='inherit'>N/A</Typography> : <TextField size="small" type="text" fullWidth
-                disabled={newKeyType == "openai"}
+            {newKeyType == "openai" ? <Typography sx={{ color: "text.secondary" }} fontSize='inherit'>N/A</Typography> : <TextField size="small" type="text" fullWidth
+                disabled={newKeyType == "openai" || newKeyType == "gemini"}
                 InputProps={{ style: { fontSize: "0.875rem" } }}
-                value={newEndpoint}  onChange={(event: any) => { setNewEndpoint(event.target.value); }} 
-                autoComplete='off'/>}
+                value={newEndpoint} onChange={(event: any) => { setNewEndpoint(event.target.value); }}
+                autoComplete='off' />}
         </TableCell>
         <TableCell align="left" >
-            <TextField fullWidth size="small" type={showKeys ? "text" : "password"} 
-                InputProps={{ style: { fontSize: "0.875rem" } }} 
+            <TextField fullWidth size="small" type={showKeys ? "text" : "password"}
+                InputProps={{ style: { fontSize: "0.875rem" } }}
                 placeholder='leave blank if using keyless access'
-                value={newKey}  onChange={(event: any) => { setNewKey(event.target.value); }} 
-                autoComplete='off'/>
+                value={newKey} onChange={(event: any) => { setNewKey(event.target.value); }}
+                autoComplete='off' />
         </TableCell>
         <TableCell align="left">
             <Autocomplete
                 freeSolo
                 onChange={(event: any, newValue: string | null) => { setNewModel(newValue || ""); }}
                 value={newModel}
-                options={['gpt-35-turbo', 'gpt-4', 'gpt-4o']}
+                options={(newKeyType === "openai" || newKeyType === "azureopenai") ? ['gpt-35-turbo', 'gpt-4', 'gpt-4o'] : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]}
                 renderOption={(props, option) => {
-                    return <Typography {...props} onClick={()=>{ setNewModel(option); }} sx={{fontSize: "small"}}>{option}</Typography>
+                    return <Typography {...props} onClick={() => { setNewModel(option); }} sx={{ fontSize: "small" }}>{option}</Typography>
                 }}
                 renderInput={(params) => (
                     <TextField
@@ -171,25 +172,26 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
                         size="small"
                         onChange={(event: any) => { setNewModel(event.target.value); }}
                     />
-                )}/>
+                )} />
         </TableCell>
         <TableCell align="right">
             <Tooltip title={modelExists ? "endpoint + model already exists" : "add and test model"}>
                 <IconButton color={modelExists ? 'error' : 'primary'}
-                    sx={{cursor: modelExists ? 'help' : 'pointer'}}
+                    sx={{ cursor: modelExists ? 'help' : 'pointer' }}
                     onClick={(event) => {
                         if (modelExists) {
                             return
                         }
                         let endpoint = newKeyType == 'openai' ? 'openai' : newEndpoint;
+                        endpoint = newKeyType == 'gemini' ? 'gemini' : newEndpoint;
                         event.stopPropagation()
 
-                        dispatch(dfActions.addModel({model: newModel, key: newKey, endpoint}));
-                        dispatch(dfActions.selectModel({model: newModel, endpoint}));
-                        setTempSelectedMode({endpoint, model: newModel});
+                        dispatch(dfActions.addModel({ model: newModel, key: newKey, endpoint }));
+                        dispatch(dfActions.selectModel({ model: newModel, endpoint }));
+                        setTempSelectedMode({ endpoint, model: newModel });
 
-                        testModel(endpoint, newKey, newModel); 
-                        
+                        testModel(endpoint, newKey, newModel);
+
                         setNewKeyType('openai');
                         setNewEndpoint("");
                         setNewKey("");
@@ -201,7 +203,7 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
         </TableCell>
         <TableCell align="right">
             <Tooltip title={"clear"}>
-                <IconButton 
+                <IconButton
                     onClick={(event) => {
                         event.stopPropagation()
 
@@ -220,103 +222,103 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
             <TableHead >
                 <TableRow>
                     <TableCell align="right"></TableCell>
-                    <TableCell sx={{fontWeight: 'bold', width: '120px'}}>Key Type</TableCell>
-                    <TableCell sx={{fontWeight: 'bold', width: '240px'}}>Endpoint</TableCell>
-                    <TableCell sx={{fontWeight: 'bold', width: '270px'}} align="left">Key</TableCell>
-                    <TableCell sx={{fontWeight: 'bold', width: '120px'}} align="left">Model</TableCell>
-                    <TableCell sx={{fontWeight: 'bold'}} align="right">Status</TableCell>
-                    <TableCell sx={{fontWeight: 'bold'}} align="right">Action</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: '120px' }}>Key Type</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: '240px' }}>Endpoint</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: '270px' }} align="left">Key</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: '120px' }} align="left">Model</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Action</TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
                 {oaiModels.map((oaiModel) => {
-                    let isItemSelected = tempSelectedModel && 
-                                            tempSelectedModel.endpoint == oaiModel.endpoint && 
-                                            tempSelectedModel.model == oaiModel.model;
-                    let status =  getStatus(oaiModel.model, oaiModel.endpoint);
-                    let statusIcon = status  == "unknown" ? <HelpOutlineIcon color="warning" /> : ( status == 'testing' ? <CircularProgress size={24} />:
-                            (status == "ok" ? <CheckCircleOutlineIcon color="success"/> : <ErrorOutlineIcon color="error"/> ))
-                    
-                    let message = status == "unknown" ? "Status unknown, click the status icon to test again." : 
+                    let isItemSelected = tempSelectedModel &&
+                        tempSelectedModel.endpoint == oaiModel.endpoint &&
+                        tempSelectedModel.model == oaiModel.model;
+                    let status = getStatus(oaiModel.model, oaiModel.endpoint);
+                    let statusIcon = status == "unknown" ? <HelpOutlineIcon color="warning" /> : (status == 'testing' ? <CircularProgress size={24} /> :
+                        (status == "ok" ? <CheckCircleOutlineIcon color="success" /> : <ErrorOutlineIcon color="error" />))
+
+                    let message = status == "unknown" ? "Status unknown, click the status icon to test again." :
                         (testedModels.find(m => m.model === oaiModel.model && m.endpoint === oaiModel.endpoint)?.message || "Unknown error");
                     const borderStyle = ['error', 'unknown'].includes(status) ? '1px dashed text.secondary' : undefined;
                     const noBorderStyle = ['error', 'unknown'].includes(status) ? 'none' : undefined;
 
                     return (
                         <>
-                        <TableRow
-                            selected={isItemSelected}
-                            key={`${oaiModel.endpoint}-${oaiModel.model}`}
-                            onClick={() => { setTempSelectedMode({model: oaiModel.model, endpoint: oaiModel.endpoint}) }}
-                            sx={{ cursor: 'pointer'}}
-                        >
-                            <TableCell align="right" sx={{ borderBottom: noBorderStyle }}>
-                                <Radio checked={isItemSelected} name="radio-buttons" inputProps={{'aria-label': 'Select this model'}} />
-                            </TableCell>
-                            <TableCell align="left" sx={{ borderBottom: noBorderStyle }}>
-                                {oaiModel.endpoint == 'openai' ? 'openai' : 'azure openai'}
-                            </TableCell>
-                            <TableCell component="th" scope="row" sx={{ borderBottom: borderStyle }}>
-                                {oaiModel.endpoint}
-                            </TableCell>
-                            <TableCell align="left" sx={{ borderBottom: borderStyle }}>
-                                {oaiModel.key != "" ? 
-                                    (showKeys ? (oaiModel.key || <Typography sx={{color: "text.secondary"}} fontSize='inherit'>N/A</Typography>) : "************") :
-                                    <Typography sx={{color: "text.secondary"}} fontSize='inherit'>N/A</Typography> 
-                                }
-                            </TableCell>
-                            <TableCell align="left" sx={{ borderBottom: borderStyle }}>{oaiModel.model}</TableCell>
-                            <TableCell sx={{fontWeight: 'bold', borderBottom: borderStyle}} align="right">
-                                <Tooltip title={message}>
-                                    <IconButton
-                                        onClick ={() => { testModel(oaiModel.endpoint, oaiModel.key, oaiModel.model)  }}
-                                    >
-                                        {statusIcon}
-                                    </IconButton>
-                                </Tooltip>
-                            </TableCell>
-                            <TableCell sx={{ borderBottom: borderStyle }} align="right">
-                                <Tooltip title="remove model">
-                                    <IconButton disabled={oaiModel.endpoint=="default"} 
-                                        onClick={()=>{
-                                            dispatch(dfActions.removeModel({model: oaiModel.model, endpoint: oaiModel.endpoint}));
-                                            if ((tempSelectedModel) 
-                                                    && tempSelectedModel.endpoint == oaiModel.endpoint 
-                                                    && tempSelectedModel.model == oaiModel.model) {
-                                                if (oaiModels.length == 0) {
-                                                    setTempSelectedMode(undefined);
-                                                } else {
-                                                    let chosenModel = oaiModels[oaiModels.length - 1];
-                                                    setTempSelectedMode({
-                                                        model: chosenModel.model, endpoint: chosenModel.endpoint
-                                                    })
-                                                }
-                                            }
-                                        }}>
-                                        <ClearIcon/>
-                                    </IconButton>
-                                </Tooltip>
-                            </TableCell>
-                        </TableRow>
-                        {['error', 'unknown'].includes(status) && (
-                            <TableRow 
+                            <TableRow
                                 selected={isItemSelected}
-                                onClick={() => { setTempSelectedMode({model: oaiModel.model, endpoint: oaiModel.endpoint}) }}
-                                sx={{ 
-                                    cursor: 'pointer',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                    },
-                                }}
+                                key={`${oaiModel.endpoint}-${oaiModel.model}`}
+                                onClick={() => { setTempSelectedMode({ model: oaiModel.model, endpoint: oaiModel.endpoint }) }}
+                                sx={{ cursor: 'pointer' }}
                             >
-                                <TableCell colSpan={2} align="right" ></TableCell>
-                                <TableCell colSpan={5}>
-                                    <Typography variant="caption" color="#c82c2c">
-                                        {message}
-                                    </Typography>
+                                <TableCell align="right" sx={{ borderBottom: noBorderStyle }}>
+                                    <Radio checked={isItemSelected} name="radio-buttons" inputProps={{ 'aria-label': 'Select this model' }} />
+                                </TableCell>
+                                <TableCell align="left" sx={{ borderBottom: noBorderStyle }}>
+                                    {oaiModel.endpoint == 'openai' ? 'openai' : 'azure openai'}
+                                </TableCell>
+                                <TableCell component="th" scope="row" sx={{ borderBottom: borderStyle }}>
+                                    {oaiModel.endpoint}
+                                </TableCell>
+                                <TableCell align="left" sx={{ borderBottom: borderStyle }}>
+                                    {oaiModel.key != "" ?
+                                        (showKeys ? (oaiModel.key || <Typography sx={{ color: "text.secondary" }} fontSize='inherit'>N/A</Typography>) : "************") :
+                                        <Typography sx={{ color: "text.secondary" }} fontSize='inherit'>N/A</Typography>
+                                    }
+                                </TableCell>
+                                <TableCell align="left" sx={{ borderBottom: borderStyle }}>{oaiModel.model}</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', borderBottom: borderStyle }} align="right">
+                                    <Tooltip title={message}>
+                                        <IconButton
+                                            onClick={() => { testModel(oaiModel.endpoint, oaiModel.key, oaiModel.model) }}
+                                        >
+                                            {statusIcon}
+                                        </IconButton>
+                                    </Tooltip>
+                                </TableCell>
+                                <TableCell sx={{ borderBottom: borderStyle }} align="right">
+                                    <Tooltip title="remove model">
+                                        <IconButton disabled={oaiModel.endpoint == "default"}
+                                            onClick={() => {
+                                                dispatch(dfActions.removeModel({ model: oaiModel.model, endpoint: oaiModel.endpoint }));
+                                                if ((tempSelectedModel)
+                                                    && tempSelectedModel.endpoint == oaiModel.endpoint
+                                                    && tempSelectedModel.model == oaiModel.model) {
+                                                    if (oaiModels.length == 0) {
+                                                        setTempSelectedMode(undefined);
+                                                    } else {
+                                                        let chosenModel = oaiModels[oaiModels.length - 1];
+                                                        setTempSelectedMode({
+                                                            model: chosenModel.model, endpoint: chosenModel.endpoint
+                                                        })
+                                                    }
+                                                }
+                                            }}>
+                                            <ClearIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </TableCell>
                             </TableRow>
-                        )}
+                            {['error', 'unknown'].includes(status) && (
+                                <TableRow
+                                    selected={isItemSelected}
+                                    onClick={() => { setTempSelectedMode({ model: oaiModel.model, endpoint: oaiModel.endpoint }) }}
+                                    sx={{
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    <TableCell colSpan={2} align="right" ></TableCell>
+                                    <TableCell colSpan={5}>
+                                        <Typography variant="caption" color="#c82c2c">
+                                            {message}
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </>
                     )
                 })}
@@ -327,26 +329,28 @@ export const ModelSelectionButton: React.FC<{}> = ({ }) => {
 
     return <>
         <Tooltip title="select model">
-            <Button sx={{fontSize: "inherit"}} variant="text" color="primary" onClick={()=>{setModelDialogOpen(true)}} endIcon={selectedModel ? <SettingsIcon /> : ''}>
+            <Button sx={{ fontSize: "inherit" }} variant="text" color="primary" onClick={() => { setModelDialogOpen(true) }} endIcon={selectedModel ? <SettingsIcon /> : ''}>
                 {selectedModel ? `Model: ${(selectedModel as any).model}` : 'Select A Model'}
             </Button>
         </Tooltip>
-        <Dialog maxWidth="lg" onClose={()=>{setModelDialogOpen(false)}} open={modelDialogOpen}>
-            <DialogTitle sx={{display: "flex",  alignItems: "center"}}>Select Model</DialogTitle>
+        <Dialog maxWidth="lg" onClose={() => { setModelDialogOpen(false) }} open={modelDialogOpen}>
+            <DialogTitle sx={{ display: "flex", alignItems: "center" }}>Select Model</DialogTitle>
             <DialogContent >
                 {modelTable}
             </DialogContent>
             <DialogActions>
-                <Button sx={{marginRight: 'auto'}} endIcon={showKeys ? <VisibilityOffIcon /> : <VisibilityIcon />} onClick={()=>{
-                    setShowKeys(!showKeys);}}>
-                        {showKeys ? 'hide' : 'show'} keys
+                <Button sx={{ marginRight: 'auto' }} endIcon={showKeys ? <VisibilityOffIcon /> : <VisibilityIcon />} onClick={() => {
+                    setShowKeys(!showKeys);
+                }}>
+                    {showKeys ? 'hide' : 'show'} keys
                 </Button>
-                <Button disabled={!(tempSelectedModel && getStatus(tempSelectedModel.model, tempSelectedModel.endpoint) == 'ok')} 
+                <Button disabled={!(tempSelectedModel && getStatus(tempSelectedModel.model, tempSelectedModel.endpoint) == 'ok')}
                     variant={(selectedModel?.endpoint == tempSelectedModel?.endpoint && selectedModel?.model == tempSelectedModel?.model) ? 'text' : 'contained'}
-                    onClick={()=>{
+                    onClick={() => {
                         dispatch(dfActions.selectModel(tempSelectedModel as any));
-                        setModelDialogOpen(false);}}>apply model</Button>
-                <Button onClick={()=>{
+                        setModelDialogOpen(false);
+                    }}>apply model</Button>
+                <Button onClick={() => {
                     setTempSelectedMode(selectedModel);
                     setModelDialogOpen(false);
                 }}>cancel</Button>

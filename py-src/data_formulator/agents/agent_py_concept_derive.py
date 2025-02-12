@@ -161,12 +161,16 @@ def derive({arg_string}):
 
         messages = [{"role":"system", "content": SYSTEM_PROMPT},
                     {"role":"user","content": user_query}]
-        
+        response=None
         ###### the part that calls open_ai
-        response = self.client.chat.completions.create(
-            model=self.model, messages = messages, temperature=0.7, max_tokens=1200,
-            top_p=0.95, n=1, frequency_penalty=0, presence_penalty=0, stop=None)
-
+        if("openai" in self.model):
+            response = self.client.chat.completions.create(
+                model=self.model, messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=1, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("gemini" in self.model):
+            response = self.client.chat.completions.create(
+                model=self.model, messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=1)  
         #log = {'messages': messages, 'response': response.model_dump(mode='json')}
 
         candidates = []

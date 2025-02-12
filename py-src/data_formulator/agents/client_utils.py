@@ -26,6 +26,9 @@ def get_client(endpoint, key):
 		)
 	elif endpoint == 'openai':
 		client = openai.OpenAI(api_key=key)
+	elif endpoint == 'gemini':
+		client = openai.OpenAI(api_key=key, 
+						 	   base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
 	else:
 		client = openai.AzureOpenAI(
 			azure_endpoint = endpoint,  

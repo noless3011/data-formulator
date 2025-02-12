@@ -218,12 +218,18 @@ output = json.dumps(df.to_dict("records"))
 
         messages = [{"role":"system", "content": SYSTEM_PROMPT},
                     {"role":"user","content": user_query}]
-        
+        response=None
         ###### the part that calls open_ai
-        response = self.client.chat.completions.create(
-            model=self.model_version, 
-            messages = messages, temperature=0.7, max_tokens=1200,
-            top_p=0.95, n=1, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("openai" in self.model_version):
+            response = self.client.chat.completions.create(
+                model=self.model_version, 
+                messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=1, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("gemini" in self.model):
+            response = self.client.chat.completions.create(
+                model=self.model_version, 
+                messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=1)  
 
         return self.process_gpt_response(input_table, output_field, response, messages)
 
@@ -232,11 +238,17 @@ output = json.dumps(df.to_dict("records"))
 
         messages = [*dialog, {"role":"user", 
                               "content": new_instruction + '\n update the function accordingly'}]
-
+        response=None
         ##### the part that calls open_ai
-        response = self.client.chat.completions.create(
-            model=self.model, messages=messages, temperature=0.7, max_tokens=1200,
-            top_p=0.95, n=n, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("openai" in self.model):
+            response = self.client.chat.completions.create(
+                model=self.model, messages=messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=n, frequency_penalty=0, presence_penalty=0, stop=None)
+        if("gemini" in self.model):
+            response = self.client.chat.completions.create(
+                model=self.model, messages = messages, temperature=0.7, max_tokens=1200,
+                top_p=0.95, n=1)  
+        
 
         candidates = self.process_gpt_response(input_table, output_field, response, messages)
 

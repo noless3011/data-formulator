@@ -135,7 +135,6 @@ class DataRecAgent(object):
         """process gpt response to handle execution"""
 
         #log = {'messages': messages, 'response': response.model_dump(mode='json')}
-
         if isinstance(response, Exception):
             result = {'status': 'other error', 'content': str(response.body)}
             return [result]
