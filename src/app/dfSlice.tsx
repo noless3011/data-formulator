@@ -15,11 +15,11 @@ import { TableChallenges } from '../views/TableSelectionView';
 
 enableMapSet();
 
-export const generateFreshChart = (tableRef: string, chartType?: string) : Chart => {
+export const generateFreshChart = (tableRef: string, chartType?: string): Chart => {
     let realChartType = chartType || "?"
-    return { 
-        id: `chart-${Date.now()- Math.floor(Math.random() * 10000)}`, 
-        chartType: realChartType, 
+    return {
+        id: `chart-${Date.now() - Math.floor(Math.random() * 10000)}`,
+        chartType: realChartType,
         encodingMap: Object.assign({}, ...getChartChannels(realChartType).map((channel) => ({ [channel]: { channel: channel, bin: false } }))),
         tableRef: tableRef,
         saved: false
@@ -40,12 +40,12 @@ export interface DataFormulatorState {
 
     models: ModelConfig[];
     selectedModelId: string | undefined;
-    testedModels: {id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string}[];
+    testedModels: { id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string }[];
 
-    tables : DictTable[];
+    tables: DictTable[];
     charts: Chart[];
-    
-    activeChallenges: {tableId: string, challenges: { text: string; difficulty: 'easy' | 'medium' | 'hard'; }[]}[];
+
+    activeChallenges: { tableId: string, challenges: { text: string; difficulty: 'easy' | 'medium' | 'hard'; }[] }[];
 
     conceptShelfItems: FieldItem[];
 
@@ -57,7 +57,7 @@ export interface DataFormulatorState {
     messages: Message[];
     displayedMessageIdx: number;
 
-    visViewMode: "gallery" | "carousel";
+    visViewMode: "gallery" | "carousel" | "database";
 
     focusedTableId: string | undefined;
     focusedChartId: string | undefined;
@@ -79,7 +79,7 @@ const initialState: DataFormulatorState = {
     charts: [],
 
     activeChallenges: [],
-    
+
     conceptShelfItems: [],
 
     //synthesizerRunning: false,
@@ -105,16 +105,16 @@ let getUnrefedDerivedTableIds = (state: DataFormulatorState) => {
 
     // find tables directly referred by charts
     let chartRefedTables = state.charts.map(chart => getDataTable(chart, state.tables, state.charts, state.conceptShelfItems));
-    
+
     // find tables referred via triggers
     let triggerRefedTableIds = chartRefedTables.filter(t => t.derive != undefined).map(t => t.derive?.trigger as Trigger);
 
     let allRefedTableIds = [...chartRefedTables.map(t => t.id), ...triggerRefedTableIds];
 
     // TODO: also need to consider concept shelf reference??
-    
+
     return state.tables.filter(table => table.derive && !allRefedTableIds.includes(table.id)).map(t => t.id);
-} 
+}
 
 let deleteChartsRoutine = (state: DataFormulatorState, chartIds: string[]) => {
     let charts = state.charts.filter(c => !chartIds.includes(c.id));
@@ -153,7 +153,7 @@ export const fetchFieldSemanticType = createAsyncThunk(
             headers: { 'Content-Type': 'application/json', },
             body: JSON.stringify({
                 token: Date.now(),
-                input_data: {name: table.id, rows: table.rows},
+                input_data: { name: table.id, rows: table.rows },
                 model: dfSelectors.getActiveModel(state)
             }),
         };
@@ -162,7 +162,7 @@ export const fetchFieldSemanticType = createAsyncThunk(
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 20000)
 
-        let response = await fetch(getUrls().SERVER_PROCESS_DATA_ON_LOAD, {...message, signal: controller.signal })
+        let response = await fetch(getUrls().SERVER_PROCESS_DATA_ON_LOAD, { ...message, signal: controller.signal })
 
         return response.json();
     }
@@ -181,8 +181,8 @@ export const fetchCodeExpl = createAsyncThunk(
             body: JSON.stringify({
                 token: Date.now(),
                 input_tables: derivedTable.derive?.source
-                                    .map(tId => state.tables.find(t => t.id == tId) as DictTable)
-                                    .map(t => {return {name: t.id, rows: t.rows}}),
+                    .map(tId => state.tables.find(t => t.id == tId) as DictTable)
+                    .map(t => { return { name: t.id, rows: t.rows } }),
                 code: derivedTable.derive?.code,
                 model: dfSelectors.getActiveModel(state)
             }),
@@ -192,7 +192,7 @@ export const fetchCodeExpl = createAsyncThunk(
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 20000)
 
-        let response = await fetch(getUrls().CODE_EXPL_URL, {...message, signal: controller.signal })
+        let response = await fetch(getUrls().CODE_EXPL_URL, { ...message, signal: controller.signal })
 
         return response.text();
     }
@@ -214,19 +214,19 @@ export const fetchAvailableModels = createAsyncThunk(
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 20000)
 
-        let response = await fetch(getUrls().CHECK_AVAILABLE_MODELS, {...message, signal: controller.signal })
+        let response = await fetch(getUrls().CHECK_AVAILABLE_MODELS, { ...message, signal: controller.signal })
 
         return response.json();
     }
 );
-  
+
 export const dataFormulatorSlice = createSlice({
     name: 'dataFormulatorSlice',
     initialState: initialState,
     reducers: {
         resetState: (state, action: PayloadAction<undefined>) => {
             //state.table = undefined;
-            
+
             // avoid resetting inputted models
             // state.oaiModels = state.oaiModels.filter((m: any) => m.endpoint != 'default');
             state.selectedModelId = state.models.length > 0 ? state.models[0].id : undefined;
@@ -260,12 +260,12 @@ export const dataFormulatorSlice = createSlice({
             //state.table = undefined;
             state.tables = savedState.tables || [];
             state.charts = savedState.charts || [];
-            
+
             state.activeChallenges = savedState.activeChallenges || [];
 
             state.conceptShelfItems = savedState.conceptShelfItems || [];
 
-            state.messages = []; 
+            state.messages = [];
             state.displayedMessageIdx = -1;
 
             state.focusedTableId = savedState.focusedTableId || undefined;
@@ -291,14 +291,14 @@ export const dataFormulatorSlice = createSlice({
                 state.selectedModelId = undefined;
             }
         },
-        updateModelStatus: (state, action: PayloadAction<{id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string}>) => {
+        updateModelStatus: (state, action: PayloadAction<{ id: string, status: 'ok' | 'error' | 'testing' | 'unknown', message: string }>) => {
             let id = action.payload.id;
             let status = action.payload.status;
             let message = action.payload.message;
-            
+
             state.testedModels = [
-                ...state.testedModels.filter(t => t.id != id), 
-                {id: id, status, message}
+                ...state.testedModels.filter(t => t.id != id),
+                { id: id, status, message }
             ];
         },
         loadTable: (state, action: PayloadAction<DictTable>) => {
@@ -308,16 +308,16 @@ export const dataFormulatorSlice = createSlice({
 
             state.focusedTableId = table.id;
             state.focusedChartId = undefined;
-            state.activeThreadChartId = undefined;  
+            state.activeThreadChartId = undefined;
         },
         deleteTable: (state, action: PayloadAction<string>) => {
             let tableId = action.payload;
             state.tables = state.tables.filter(t => t.id != tableId);
 
             // feels problematic???
-            state.conceptShelfItems = state.conceptShelfItems.filter(f => !(f.tableRef == tableId || 
-                                                                            findBaseFields(f, state.conceptShelfItems).some(f2 => f2.tableRef == tableId)));
-            
+            state.conceptShelfItems = state.conceptShelfItems.filter(f => !(f.tableRef == tableId ||
+                findBaseFields(f, state.conceptShelfItems).some(f2 => f2.tableRef == tableId)));
+
             // delete charts that refer to this table and intermediate charts that produce this table
             let chartIdsToDelete = state.charts.filter(c => c.tableRef == tableId).map(c => c.id);
             deleteChartsRoutine(state, chartIdsToDelete);
@@ -325,14 +325,14 @@ export const dataFormulatorSlice = createSlice({
             // separate this, so that we only delete on tier of table a time
             state.charts = state.charts.filter(c => !(c.intermediate && c.intermediate.resultTableId == tableId));
         },
-        addChallenges: (state, action: PayloadAction<{tableId: string, challenges: { text: string; difficulty: 'easy' | 'medium' | 'hard'; }[]}>) => {
+        addChallenges: (state, action: PayloadAction<{ tableId: string, challenges: { text: string; difficulty: 'easy' | 'medium' | 'hard'; }[] }>) => {
             state.activeChallenges = [...state.activeChallenges, action.payload];
         },
-        createNewChart: (state, action: PayloadAction<{chartType?: string, tableId?: string}>) => {
+        createNewChart: (state, action: PayloadAction<{ chartType?: string, tableId?: string }>) => {
             let chartType = action.payload.chartType;
             let tableId = action.payload.tableId || state.tables[0].id;
             let freshChart = generateFreshChart(tableId, chartType) as Chart;
-            state.charts = [ freshChart , ...state.charts];
+            state.charts = [freshChart, ...state.charts];
             state.focusedTableId = tableId;
             state.focusedChartId = freshChart.id;
             state.activeThreadChartId = freshChart.id;
@@ -346,7 +346,7 @@ export const dataFormulatorSlice = createSlice({
 
             let chartCopy = JSON.parse(JSON.stringify(state.charts.find(chart => chart.id == chartId) as Chart)) as Chart;
             chartCopy = { ...chartCopy, saved: false }
-            chartCopy.id = `chart-${Date.now()- Math.floor(Math.random() * 10000)}`;
+            chartCopy.id = `chart-${Date.now() - Math.floor(Math.random() * 10000)}`;
             state.charts.push(chartCopy);
             state.focusedChartId = chartCopy.id;
         },
@@ -361,7 +361,7 @@ export const dataFormulatorSlice = createSlice({
                 }
             })
         },
-        updateChartScaleFactor: (state, action: PayloadAction<{chartId: string, scaleFactor: number}>) => {
+        updateChartScaleFactor: (state, action: PayloadAction<{ chartId: string, scaleFactor: number }>) => {
             let chartId = action.payload.chartId;
             let scaleFactor = action.payload.scaleFactor;
 
@@ -377,7 +377,7 @@ export const dataFormulatorSlice = createSlice({
             let chartId = action.payload;
             deleteChartsRoutine(state, [chartId]);
         },
-        updateChartType: (state, action: PayloadAction<{chartId: string, chartType: string}>) => {
+        updateChartType: (state, action: PayloadAction<{ chartId: string, chartType: string }>) => {
             let chartId = action.payload.chartId;
             let chartType = action.payload.chartType;
             state.charts = state.charts.map(chart => {
@@ -388,7 +388,7 @@ export const dataFormulatorSlice = createSlice({
                 }
             })
         },
-        updateTableRef: (state, action: PayloadAction<{chartId: string, tableRef: string}>) => {
+        updateTableRef: (state, action: PayloadAction<{ chartId: string, tableRef: string }>) => {
             let chartId = action.payload.chartId;
             let tableRef = action.payload.tableRef;
             state.charts = state.charts.map(chart => {
@@ -399,7 +399,7 @@ export const dataFormulatorSlice = createSlice({
                 }
             })
         },
-        replaceTable: (state, action: PayloadAction<{chartId: string, table: DictTable}>) => {
+        replaceTable: (state, action: PayloadAction<{ chartId: string, table: DictTable }>) => {
             let chartId = action.payload.chartId;
             let chart = state.charts.find(c => c.id == chartId) as Chart;
             let table = action.payload.table;
@@ -418,7 +418,7 @@ export const dataFormulatorSlice = createSlice({
                 state.tables = [...state.tables, table];
             }
         },
-        updateChartEncodingMap: (state, action: PayloadAction<{chartId: string, encodingMap: EncodingMap}>) => {
+        updateChartEncodingMap: (state, action: PayloadAction<{ chartId: string, encodingMap: EncodingMap }>) => {
             let chartId = action.payload.chartId;
             let encodingMap = action.payload.encodingMap;
             state.charts = state.charts.map(c => {
@@ -429,7 +429,7 @@ export const dataFormulatorSlice = createSlice({
                 }
             })
         },
-        updateChartEncoding: (state, action: PayloadAction<{chartId: string, channel: Channel, encoding: EncodingItem}>) => {
+        updateChartEncoding: (state, action: PayloadAction<{ chartId: string, channel: Channel, encoding: EncodingItem }>) => {
             let chartId = action.payload.chartId;
             let channel = action.payload.channel;
             let encoding = action.payload.encoding;
@@ -439,13 +439,13 @@ export const dataFormulatorSlice = createSlice({
                 (state.charts.find(chart => chart.id == chartId) as Chart).encodingMap[channel] = encoding;
             }
         },
-        updateChartEncodingProp: (state, action: PayloadAction<{chartId: string, channel: Channel, prop: string, value: any}>) => {
+        updateChartEncodingProp: (state, action: PayloadAction<{ chartId: string, channel: Channel, prop: string, value: any }>) => {
             let chartId = action.payload.chartId;
             let channel = action.payload.channel;
             let prop = action.payload.prop;
             let value = action.payload.value;
             let chart = state.charts.find(chart => chart.id == chartId);
-            
+
             if (chart) {
                 //TODO: check this, finding reference and directly update??
                 let encoding = (state.charts.find(chart => chart.id == chartId) as Chart).encodingMap[channel];
@@ -472,7 +472,7 @@ export const dataFormulatorSlice = createSlice({
                 }
             }
         },
-        swapChartEncoding: (state, action: PayloadAction<{chartId: string, channel1: Channel, channel2: Channel}>) => {
+        swapChartEncoding: (state, action: PayloadAction<{ chartId: string, channel1: Channel, channel2: Channel }>) => {
             let chartId = action.payload.chartId;
             let channel1 = action.payload.channel1;
             let channel2 = action.payload.channel2;
@@ -508,12 +508,12 @@ export const dataFormulatorSlice = createSlice({
         deleteConceptItemByID: (state, action: PayloadAction<string>) => {
             let conceptID = action.payload;
             // remove concepts from encoding maps
-            if (state.charts.some(chart => chart.saved 
+            if (state.charts.some(chart => chart.saved
                 && Object.entries(chart.encodingMap).some(([channel, encoding]) => encoding.fieldID && conceptID == encoding.fieldID))) {
                 console.log("cannot delete!")
             } else {
                 state.conceptShelfItems = state.conceptShelfItems.filter(field => field.id != conceptID);
-                for (let chart of state.charts)  {
+                for (let chart of state.charts) {
                     for (let [channel, encoding] of Object.entries(chart.encodingMap)) {
                         if (encoding.fieldID && conceptID == encoding.fieldID) {
                             // clear the encoding
@@ -526,12 +526,12 @@ export const dataFormulatorSlice = createSlice({
         batchDeleteConceptItemByID: (state, action: PayloadAction<string[]>) => {
             for (let conceptID of action.payload) {
                 // remove concepts from encoding maps
-                if (state.charts.some(chart => chart.saved 
+                if (state.charts.some(chart => chart.saved
                     && Object.entries(chart.encodingMap).some(([channel, encoding]) => encoding.fieldID && conceptID == encoding.fieldID))) {
                     console.log("cannot delete!")
                 } else {
                     state.conceptShelfItems = state.conceptShelfItems.filter(field => field.id != conceptID);
-                    for (let chart of state.charts)  {
+                    for (let chart of state.charts) {
                         for (let [channel, encoding] of Object.entries(chart.encodingMap)) {
                             if (encoding.fieldID && conceptID == encoding.fieldID) {
                                 // clear the encoding
@@ -564,7 +564,7 @@ export const dataFormulatorSlice = createSlice({
             let fieldNamesFromTables = state.tables.map(t => t.names).flat();
             let fieldIdsReferredByCharts = state.charts.map(c => Object.values(c.encodingMap).map(enc => enc.fieldID).filter(fid => fid != undefined) as string[]).flat();
 
-            state.conceptShelfItems = state.conceptShelfItems.filter(field => !(field.source == "custom" 
+            state.conceptShelfItems = state.conceptShelfItems.filter(field => !(field.source == "custom"
                 && !(fieldNamesFromTables.includes(field.name) || fieldIdsReferredByCharts.includes(field.id))))
 
             // consider cleaning up other fields if 
@@ -605,18 +605,18 @@ export const dataFormulatorSlice = createSlice({
                 if (activeThreadChartTable) {
                     let triggers = getTriggers(activeThreadChartTable, state.tables);
                     if (triggers.map(tg => tg.tableId).includes(chart?.intermediate?.resultTableId)) {
-                        let nextChart =  state.charts.find(c => c.intermediate == undefined && c.tableRef == chart?.intermediate?.resultTableId);
+                        let nextChart = state.charts.find(c => c.intermediate == undefined && c.tableRef == chart?.intermediate?.resultTableId);
                         if (nextChart) {
                             state.activeThreadChartId = nextChart.id;
                         }
                     }
-                }           
+                }
             }
         },
-        setVisViewMode: (state, action: PayloadAction<"carousel" | "gallery">) => {
+        setVisViewMode: (state, action: PayloadAction<"carousel" | "gallery" | "database">) => {
             state.visViewMode = action.payload;
         },
-        changeChartRunningStatus: (state, action: PayloadAction<{chartId: string, status: boolean}>) => {
+        changeChartRunningStatus: (state, action: PayloadAction<{ chartId: string, status: boolean }>) => {
             if (action.payload.status) {
                 state.chartSynthesisInProgress = [...new Set([...state.chartSynthesisInProgress, action.payload.chartId])]
             } else {
@@ -626,63 +626,63 @@ export const dataFormulatorSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-        .addCase(fetchFieldSemanticType.fulfilled, (state, action) => {
-            let data = action.payload;
-            let tableId = action.meta.arg.id;
+            .addCase(fetchFieldSemanticType.fulfilled, (state, action) => {
+                let data = action.payload;
+                let tableId = action.meta.arg.id;
 
-            if (data["status"] == "ok" && data["result"].length > 0) {
-                let typeMap = data['result'][0]['fields'];
-                state.conceptShelfItems = state.conceptShelfItems.map(field => {
-                    if (((field.source == "original" && field.tableRef == tableId ) || field.source == "custom") && Object.keys(typeMap).includes(field.name)) {
-                        field.semanticType = typeMap[field.name]['semantic_type'];
-                        field.type = typeMap[field.name]['type'] as Type;
-                        if (typeMap[field.name]['sort_order']) {
-                            field.levels = { "values": typeMap[field.name]['sort_order'], "reason": "natural sort order"}
+                if (data["status"] == "ok" && data["result"].length > 0) {
+                    let typeMap = data['result'][0]['fields'];
+                    state.conceptShelfItems = state.conceptShelfItems.map(field => {
+                        if (((field.source == "original" && field.tableRef == tableId) || field.source == "custom") && Object.keys(typeMap).includes(field.name)) {
+                            field.semanticType = typeMap[field.name]['semantic_type'];
+                            field.type = typeMap[field.name]['type'] as Type;
+                            if (typeMap[field.name]['sort_order']) {
+                                field.levels = { "values": typeMap[field.name]['sort_order'], "reason": "natural sort order" }
+                            }
+                            return field;
+                        } else {
+                            return field;
                         }
-                        return field;
-                    } else {
-                        return field;
-                    }
-                })
-            }
-        })
-        .addCase(fetchAvailableModels.fulfilled, (state, action) => {
-            let defaultModels = action.payload;
+                    })
+                }
+            })
+            .addCase(fetchAvailableModels.fulfilled, (state, action) => {
+                let defaultModels = action.payload;
 
-            state.models = [
-                ...defaultModels, 
-                ...state.models.filter(e => !defaultModels.map((m: ModelConfig) => m.endpoint).includes(e.endpoint))
-            ];
-            
-            state.testedModels = [ 
-                ...defaultModels.map((m: ModelConfig) => {return {id: m.id, status: 'ok'}}) ,
-                ...state.testedModels.filter(t => !defaultModels.map((m: ModelConfig) => m.id).includes(t.id))
-            ]
+                state.models = [
+                    ...defaultModels,
+                    ...state.models.filter(e => !defaultModels.map((m: ModelConfig) => m.endpoint).includes(e.endpoint))
+                ];
 
-            if (state.selectedModelId == undefined && defaultModels.length > 0) {
-                state.selectedModelId = defaultModels[0].id;
-            }
+                state.testedModels = [
+                    ...defaultModels.map((m: ModelConfig) => { return { id: m.id, status: 'ok' } }),
+                    ...state.testedModels.filter(t => !defaultModels.map((m: ModelConfig) => m.id).includes(t.id))
+                ]
 
-            console.log("load model complete");
-            console.log("state.models", state.models);
-            console.log("state.selectedModelId", state.selectedModelId);
-            console.log("state.testedModels", state.testedModels);
-        })
-        .addCase(fetchCodeExpl.fulfilled, (state, action) => {
-            let codeExpl = action.payload;
-            let derivedTableId = action.meta.arg.id;
-            let derivedTable = state.tables.find(t => t.id == derivedTableId)
-            if (derivedTable?.derive) {
-                derivedTable.derive.codeExpl = codeExpl;
-            }
-            console.log("fetched codeExpl");
-            console.log(action.payload);
-        })
+                if (state.selectedModelId == undefined && defaultModels.length > 0) {
+                    state.selectedModelId = defaultModels[0].id;
+                }
+
+                console.log("load model complete");
+                console.log("state.models", state.models);
+                console.log("state.selectedModelId", state.selectedModelId);
+                console.log("state.testedModels", state.testedModels);
+            })
+            .addCase(fetchCodeExpl.fulfilled, (state, action) => {
+                let codeExpl = action.payload;
+                let derivedTableId = action.meta.arg.id;
+                let derivedTable = state.tables.find(t => t.id == derivedTableId)
+                if (derivedTable?.derive) {
+                    derivedTable.derive.codeExpl = codeExpl;
+                }
+                console.log("fetched codeExpl");
+                console.log(action.payload);
+            })
     },
 })
 
 export const dfSelectors = {
-    getActiveModel: (state: DataFormulatorState) : ModelConfig => {
+    getActiveModel: (state: DataFormulatorState): ModelConfig => {
         return state.models.find(m => m.id == state.selectedModelId) || state.models[0];
     },
     getActiveBaseTableIds: (state: DataFormulatorState) => {

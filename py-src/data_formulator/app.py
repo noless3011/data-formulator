@@ -9,6 +9,7 @@ import mimetypes
 mimetypes.add_type('application/javascript', '.js')
 mimetypes.add_type('application/javascript', '.mjs')
 
+from data_formulator.database_handler import MySqlHandler
 import flask
 from flask import Flask, request, send_from_directory, redirect, url_for
 from flask import stream_with_context, Response
@@ -524,6 +525,32 @@ def request_code_expl():
     else:
         expl = ""
     return expl
+
+@app.route('/connectdb', methods=['POST'])
+def connect_db():
+    try:
+        data = request.get_json()
+        host = data.get('host')
+        port = data.get('port')
+        database = data.get('database')
+        user = data.get('user')
+        password = data.get('password')
+
+        if not all([host, database, user, password]):
+            return flask.jsonify({"status": "error", "message": "Missing required parameters (host, database, user, password)"}), 400
+
+        mysql_handler = MySqlHandler(host=host, port=port, database=database, user=user, password=password)
+        mysql_handler.connect()
+
+        if mysql_handler.engine:
+            return flask.jsonify({"status": "success", "message": "Successfully connected to the database"})
+        else:
+            return flask.jsonify({"status": "error", "message": "Failed to connect to the database, check credentials and database server."}), 500
+
+    except ConnectionError as e:
+        return flask.jsonify({"status": "error", "message": f"Connection failed: {str(e)}"}), 500
+    except Exception as e:
+        return flask.jsonify({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}), 500
 
 
 def parse_args() -> argparse.Namespace:

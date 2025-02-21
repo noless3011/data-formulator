@@ -66,6 +66,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
+import StorageIcon from '@mui/icons-material/Storage';
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
     color: 'black',
@@ -114,17 +115,17 @@ export const ImportStateButton: React.FC<{}> = ({ }) => {
     };
 
     return (
-        <Button 
-            variant="text" 
+        <Button
+            variant="text"
             color="primary"
-            sx={{textTransform: 'none'}}
+            sx={{ textTransform: 'none' }}
             onClick={() => inputRef.current?.click()}
             startIcon={<UploadFileIcon />}
         >
-            <Input 
-                inputProps={{ 
+            <Input
+                inputProps={{
                     accept: '.dfstate',
-                    multiple: false 
+                    multiple: false
                 }}
                 id="upload-data-file"
                 type="file"
@@ -141,9 +142,9 @@ export const ExportStateButton: React.FC<{}> = ({ }) => {
     const fullStateJson = useSelector((state: DataFormulatorState) => JSON.stringify(state));
 
     return <Tooltip title="save session locally">
-        <Button 
-            variant="text" 
-            sx={{textTransform: 'none'}} 
+        <Button
+            variant="text"
+            sx={{ textTransform: 'none' }}
             onClick={() => {
                 function download(content: string, fileName: string, contentType: string) {
                     let a = document.createElement("a");
@@ -173,7 +174,7 @@ export interface AppFCProps {
 const TableMenu: React.FC = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    
+
     return (
         <>
             <Button
@@ -209,7 +210,7 @@ const TableMenu: React.FC = () => {
                         </Typography>
                     } disabled={false} />
                 </MenuItem>
-                <MenuItem onClick={(e) => {}} >
+                <MenuItem onClick={(e) => { }} >
                     <TableUploadDialog buttonElement={
                         <Typography sx={{ fontSize: 14, textTransform: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
                             <UploadFileIcon fontSize="small" />
@@ -225,13 +226,13 @@ const TableMenu: React.FC = () => {
 const SessionMenu: React.FC = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    
+
     return (
         <>
-            <Button 
-                variant="text" 
-                onClick={(e) => setAnchorEl(e.currentTarget)} 
-                endIcon={<KeyboardArrowDownIcon />} 
+            <Button
+                variant="text"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                endIcon={<KeyboardArrowDownIcon />}
                 sx={{ textTransform: 'none' }}
             >
                 Session
@@ -247,10 +248,10 @@ const SessionMenu: React.FC = () => {
                 }}
                 sx={{ '& .MuiMenuItem-root': { padding: 0, margin: 0 } }}
             >
-                <MenuItem onClick={() => {}}>
+                <MenuItem onClick={() => { }}>
                     <ExportStateButton />
                 </MenuItem>
-                <MenuItem onClick={(e) => {}}>
+                <MenuItem onClick={(e) => { }}>
                     <ImportStateButton />
                 </MenuItem>
             </Menu>
@@ -264,9 +265,9 @@ const ResetDialog: React.FC = () => {
 
     return (
         <>
-            <Button 
-                variant="text" 
-                onClick={() => setOpen(true)} 
+            <Button
+                variant="text"
+                onClick={() => setOpen(true)}
                 endIcon={<PowerSettingsNewIcon />}
             >
                 Reset session
@@ -279,14 +280,14 @@ const ResetDialog: React.FC = () => {
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button 
-                        onClick={() => { 
-                            dispatch(dfActions.resetState()); 
-                            setOpen(false); 
-                        }} 
+                    <Button
+                        onClick={() => {
+                            dispatch(dfActions.resetState());
+                            setOpen(false);
+                        }}
                         endIcon={<PowerSettingsNewIcon />}
                     >
-                        reset session 
+                        reset session
                     </Button>
                     <Button onClick={() => setOpen(false)}>cancel</Button>
                 </DialogActions>
@@ -387,7 +388,7 @@ export const AppFC: FC<AppFCProps> = function AppFC(appProps) {
                     event: React.MouseEvent<HTMLElement>,
                     newViewMode: string | null,
                 ) => {
-                    if (newViewMode === "gallery" || newViewMode === "carousel") {
+                    if (newViewMode === "gallery" || newViewMode === "carousel" || newViewMode === "database") {
                         dispatch(dfActions.setVisViewMode(newViewMode));
                     }
                 }}
@@ -402,6 +403,11 @@ export const AppFC: FC<AppFCProps> = function AppFC(appProps) {
                 <ToggleButton value="gallery" aria-label="view grid">
                     <Tooltip title="view grid">
                         <GridViewIcon fontSize="small" />
+                    </Tooltip>
+                </ToggleButton>
+                <ToggleButton value="database" aria-label="view grid">
+                    <Tooltip title="view database">
+                        <StorageIcon fontSize="small" />
                     </Tooltip>
                 </ToggleButton>
             </ToggleButtonGroup>
@@ -463,7 +469,7 @@ export const AppFC: FC<AppFCProps> = function AppFC(appProps) {
     ]);
 
     let app =
-        <Box sx={{ 
+        <Box sx={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -474,7 +480,7 @@ export const AppFC: FC<AppFCProps> = function AppFC(appProps) {
                 minHeight: '800px'
             }
         }}>
-            <Box sx={{ 
+            <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
